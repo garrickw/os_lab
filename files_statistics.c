@@ -36,8 +36,7 @@ void gothrough_record(const char*root)
 	{
 		perror("opendir error");
 		exit(-127) ;
-	}
-
+	} 
 	while( (entry=readdir(dp)) != NULL)
 	{
 
@@ -48,7 +47,7 @@ void gothrough_record(const char*root)
 				continue;
 			gothrough_record(childpath);
 		}
-		else  //if(S_ISREG(statbuf.st_mode))       /*not a directory, record its size*/
+		else  /*not a directory, record its size*/
 		{
 			++total;
 			lstat(childpath, &statbuf);
