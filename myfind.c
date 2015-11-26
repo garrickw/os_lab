@@ -23,6 +23,7 @@ char avoiddir[NAME_MAX+1] ;
 int cdays, mdays;
 
 
+/*a string compare function that supports the wildcard(* and ?) */
 int mystrcmp(char*pattern, char*str)
 {
 	if(strchr( pattern, '*'))
@@ -99,29 +100,32 @@ int dealwithThefile(char* filename, struct stat *statbuf)
 	}
 	return isTheFile;
 }
+
+
 void find(char *root)
 {
 	DIR* dp;
 	struct stat statbuf;
 	struct dirent *entry;
 	long size;
-	char *pathbuf;
-	char *ptr;
-
-	size = pathconf(".",_PC_PATH_MAX);
-	if( ( pathbuf = (char*)malloc((size_t)size)) != NULL)
-		ptr = getcwd(pathbuf, (size_t)size);    
-
+	char fullpath[PATH_MAX+1];
+	memset(fullpath, 0, sizeof(fullpath));
 
 	if( (dp = opendir(root)) == NULL)
 	{
 		perror("opendir error");
 		return ;
 	}
-	chdir(root);
+
+
 	while( (entry=readdir(dp)) != NULL)
 	{
-		if( lstat(entry->d_name,&statbuf) == -1)
+		if( strcmp(root, "/") == 0)
+			sprintf(fullpath, "/%s", entry->d_name);
+		else 
+		sprintf(fullpath, "%s/%s", root, entry->d_name);
+
+		if( lstat(fullpath, &statbuf) == -1)
 		{
 			perror("lstat error!");
 			return;
@@ -133,17 +137,13 @@ void find(char *root)
 				continue;
 			if(ToAvoidDir && strcmp(avoiddir, entry->d_name) == 0)      //don't go to find in this directory
 				continue;
-			find(entry->d_name);
+			find(fullpath);
 		}
-		else                                                                //deal with the not directory
+		else                                                                //deal with the regular file.
 			if( dealwithThefile(entry->d_name, &statbuf) )
-
-				printf("%s/%s\n", ptr,entry->d_name);
+				printf("%s\n", fullpath);
 	}
-
-	chdir("..");
 	closedir(dp);
-	free(ptr);
 }
 
 int main(int argc, char const *argv[])
